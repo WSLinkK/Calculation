@@ -2,7 +2,7 @@ import os
 import rhf
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import tracemalloc
 
 # --HF_for_H2_molecule
@@ -61,6 +61,7 @@ for r, R in enumerate(distance):
     print(f"_____________________Creating Spectral Function Graph _____________________")
     #A_hs_sao, A_ao, sigma = hf_jacob.hf_loop(n_ao, R, nuc_rep, N)
     #print(test)
+'''
     imag, axis_1 = plt.subplots(2, 2, figsize=(12, 10))
     sigma, axis_2 = plt.subplots(2, 2, figsize=(12, 10))
     t = 0
@@ -92,7 +93,7 @@ for r, R in enumerate(distance):
     #wabplt.show()
 
 
-
+'''
 '''
     
     print(f"_____________________Creating Spectral Function Graph _____________________")
