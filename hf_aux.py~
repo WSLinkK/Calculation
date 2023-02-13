@@ -1,0 +1,207 @@
+import numpy as N
+import scipy.linalg
+
+def get_integrals(nao):
+
+    file_v_int="fort.3001"
+    file_h_core_int="fort.3005" 
+    file_eigenvalues="fort.2024"
+    file_eigenvectors="fort.2999"
+    file_overlap="fort.3003"
+
+
+    h_core_ao=get_t_int(file_h_core_int,nao)
+    v_ao=get_v_int(file_v_int,nao)
+    s_ao=get_overlap_matrix(file_overlap,nao)
+
+    return h_core_ao,v_ao,s_ao
+
+
+def get_t_int(file_t_int,nao):
+
+    f=open(file_t_int,'r')
+
+    t_int=N.zeros((nao,nao))
+
+    for line in f:
+        toks = line.split()
+        i=int(toks[0])
+        j=int(toks[1])
+        t_int[i-1,j-1]=float(toks[2].replace("D","E"))
+        t_int[j-1,i-1]=t_int[i-1,j-1]
+    f.close()
+
+    return t_int
+
+def get_v_int(file_integrals,nao):
+
+
+    vint=N.zeros((nao,nao,nao,nao))
+
+    f=open(file_integrals,'r')
+
+    for line in f:
+        toks=line.split()
+        i=int(toks[0])
+        j=int(toks[1])
+        k=int(toks[2])
+        l=int(toks[3])
+        vint[i-1,j-1,k-1,l-1]=float(toks[4].replace("D","E"))
+
+    for mu in xrange(nao):
+        for nu in xrange(mu+1):
+            for lam in xrange(nao):
+                for sig in xrange(lam+1):
+                    if abs(vint[mu,nu,lam,sig])>=1.e-12:
+                        vint[nu,mu,lam,sig]=vint[mu,nu,lam,sig]
+                        vint[mu,nu,sig,lam]=vint[mu,nu,lam,sig]
+                        vint[nu,mu,sig,lam]=vint[mu,nu,lam,sig]
+                        vint[nu,mu,lam,sig]=vint[mu,nu,lam,sig]
+                        vint[lam,sig,mu,nu]=vint[mu,nu,lam,sig]
+                        vint[sig,lam,mu,nu]=vint[mu,nu,lam,sig]
+                        vint[lam,sig,nu,mu]=vint[mu,nu,lam,sig]
+                        vint[sig,lam,nu,mu]=vint[mu,nu,lam,sig]
+
+
+
+    return vint
+
+
+def get_overlap_matrix(file_overlap,nao):
+
+    f=open(file_overlap,'r')
+
+    smat=N.zeros((nao,nao))
+
+    for line in f:
+        toks=line.split()
+        i=int(toks[0])
+        j=int(toks[1])
+        smat[i-1,j-1]=float(toks[2].replace("D","E"))
+        smat[j-1,i-1]=smat[i-1,j-1]
+    f.close()
+
+    return smat
+
+
+def calculate_S12_transformation_matrix(smat):
+
+    s_eigval_ld, s_eigvec_ld=scipy.linalg.eigh(smat)
+    #print s_eigval_ld
+    s_eigval, s_eigvec=reject_linear_dependencies(s_eigval_ld,s_eigvec_ld)
+    #print s_eigval
+    s12=N.sqrt(s_eigval)
+    #print s12
+    
+    Xmat=N.zeros(s_eigvec.shape)
+    emat=N.zeros(s_eigvec.shape)
+    for col in xrange(s_eigvec.shape[1]):
+        emat[col,col]=1./s12[col]
+
+    Xmat=N.dot(s_eigvec,N.dot(emat,N.transpose(s_eigvec)))
+    return Xmat
+
+def reject_linear_dependencies(s_eigval,s_eigvec):
+
+    k=0
+    if s_eigval[0]<=1.e-8:
+
+         for eigval in s_eigval:
+            if eigval[0]<=1.e-15:
+                k=k+1
+
+    return s_eigval[k:],s_eigvec[:,k:]
+
+
+def calc_hf_energy(h_core_ao,G,P_new):
+
+    energy=0.5*N.trace(N.dot(P_new,h_core_ao+(h_core_ao+G)))
+
+    return energy
+
+
+
+def find_nuc_energy(file_hf):
+    f=open(file_hf,'r')
+
+    for line in f:
+        if "Nuclear repulsion:" in line:
+            toks=line.split()
+            nuc_rep=float(toks[2])
+    f.close()
+    return nuc_rep
+
+
+def calculate_unit_cell_correction(DMD,vint,dim):
+
+    uc_two_el=N.zeros((dim,dim))
+    Gc=N.zeros((dim,dim))
+    Gx=N.zeros((dim,dim))
+
+    for mu in xrange(dim):
+        for nu in xrange(dim):
+            for lam in xrange(dim):
+                for sig in xrange(dim):
+                    uc_two_el[mu,nu]=uc_two_el[mu,nu]+DMD[lam,sig]*(vint[mu,nu,sig,lam]-0.5*vint[mu,lam,sig,nu])
+                    Gc[mu,nu]=Gc[mu,nu]+DMD[lam,sig]*(vint[mu,nu,sig,lam])
+                    Gx[mu,nu]=Gx[mu,nu]+DMD[lam,sig]*(-0.5*vint[mu,lam,sig,nu])
+
+    return uc_two_el,Gc,Gx
+
+
+def calculate_density_matrix(noc,eigenvec):
+
+    DM_AO=2.0*N.dot(eigenvec[:,0:noc],N.transpose(eigenvec[:,0:noc]))
+
+    return DM_AO
+
+
+def transform_v(v_ao,cmo):
+
+    nao=cmo.shape[0]
+    nmo=cmo.shape[1]
+
+    cmot=N.zeros(cmo.shape)
+    cmot[:,:]=N.transpose(cmo)[:,:]
+
+    v_aux=N.zeros((nao,nao,nao,nmo))
+    for mu in xrange(nmo):
+        for i in xrange(nao):
+            for j in xrange(nao):
+                for k in xrange(nao):
+                    for l in xrange(nao):
+                        v_aux[i,j,k,mu]= v_aux[i,j,k,mu]+v_ao[i,j,k,l]*cmo[l,mu]
+
+    v_ao[:,:,:,:]=0.0
+    for mu in xrange(nmo):
+        for nu in xrange(nmo):
+            for i in xrange(nao):
+                for j in xrange(nao):
+                    for k in xrange(nao):
+                        v_ao[nu,j,k,mu]= v_ao[nu,j,k,mu]+v_aux[i,j,k,mu]*cmot[nu,i]
+
+
+    v_aux[:,:,:,:]=0.0
+    for mu in xrange(nmo):
+        for nu in xrange(nmo):
+            for sigma in xrange(nmo):
+                for j in xrange(nao):
+                    for k in xrange(nao):
+                        v_aux[nu,j,sigma,mu]= v_aux[nu,j,sigma,mu]+v_ao[nu,j,k,mu]*cmo[k,sigma]
+
+
+
+    v_ao[:,:,:,:]=0.0
+    for mu in xrange(nmo):
+        for nu in xrange(nmo):
+            for sigma in xrange(nmo):
+                for delta in xrange(nmo):
+                    for j in xrange(nao):
+                        v_ao[nu,delta,sigma,mu]= v_ao[nu,delta,sigma,mu]+v_aux[nu,j,sigma,mu]*cmot[delta,j]
+
+
+                        
+
+            
+
+    return v_ao

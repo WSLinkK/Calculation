@@ -1,0 +1,8 @@
+BASIS
+STO-3G
+ 
+ 
+Atomtypes=1  Charge=0 NOSYMMETRY  BOHR
+       1.    2    1    1
+H1        0.0         0.0     0.35
+H3        0.0         0.0    -0.35

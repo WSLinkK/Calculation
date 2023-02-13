@@ -1,0 +1,24 @@
+
+ DALTON: default work memory size used.
+
+ Work memory size (LMWORK+2):   800000002 =  5.960 gigabytes.
+
+ Directories for basis set searches:
+        /home/zgid/dmft_self_c_reparametrized:/home/gull/pandzur/Dalton_2.1_fci_dmet_n/dalton/basis/                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+
+ Error file print level:     1
+
+
+ >>>> CPU and wall time for SIRINP :      0.01      0.00
+
+
+ >>>> CPU and wall time for SCF :      0.00      0.00
+
+
+
+ >>>> Total CPU  time used in SIRIUS :      0.01 seconds
+ >>>> Total wall time used in SIRIUS :      0.00 seconds
+
+ 
+     Date and time (Linux)  : Wed Nov 14 14:19:06 2012
+     Host name              : newton                                  

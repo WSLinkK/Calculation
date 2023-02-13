@@ -1,0 +1,18 @@
+_____________________H2_0.7.out_____________________
+_____________________Starting SCF Procedure_____________________
+______Convergence step 1______
+Electronic energy = -3.007314645309386
+Convergence error:0.26460140264528614
+______Convergence step 2______
+Electronic energy = -2.2657017189421733
+Convergence error:3.1401849173675503e-16
+______Met Convergence Criteria______
+Calculation converged with electronic energy:-2.2657017189421733
+Calculation converged with total energy:-0.8371302903711733
+Density matrix:
+[[0.52920281 0.52920281]
+ [0.52920281 0.52920281]]
+Coefficient:
+[[-0.51439421 -2.12847614]
+ [-0.51439421  2.12847614]]
+_____________________Starting MP2 Procedure_____________________

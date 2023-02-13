@@ -1,0 +1,4 @@
+# Added by Warewulf  2023-01-05
+Host *
+   IdentityFile ~/.ssh/cluster
+   StrictHostKeyChecking=no

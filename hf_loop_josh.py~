@@ -1,0 +1,210 @@
+import hf_aux
+import scipy.linalg
+import numpy as np
+import math
+from numpy import linalg as LA
+def hf_loop(nao,R,nuc_rep,N):
+    energyold = 0
+
+    #--point_1_and_2---specify--integrals
+
+    h_core_ao,v_ao,s_ao=hf_aux.get_integrals(nao)
+#    print "h_core_ao"
+#    print h_core_ao
+#    print h_core_ao.shape
+    for i in range(nao):
+        for j in range(nao):
+            for k in range(nao):
+                for l in range(nao):
+                    print(i,j,k,l,v_ao[i,j,k,l])
+#    print "overlap"
+#    print s_ao
+    # h_core_ao=H_core_{mu,nu}  kinteic energy integral + nuclear-electron attraction
+    # v_ao=[ij|kl] two-electron integrals Coulomb repulsion
+    #--point_3--diagonalize_overlap_matrix
+
+    X=hf_aux.calculate_S12_transformation_matrix(s_ao)
+
+    #---point_4--guess_for_density_matrix_P_old
+    #---here_you_have_to_write_it
+          #---point_7_calculate_transformed--F_trans=X_transpose*F*X
+    X_three=np.zeros((nao,nao))
+    for i in range(nao):
+     for j in range(nao):
+      X_three[i,j]=X[j,i]
+    P_old=np.zeros((nao,nao))
+    
+    n_iter_max=40
+    converged=False
+    conv_thresh=1e-07 #threshold for convergence checking
+    F=np.zeros((nao,nao))
+    for iter in range(n_iter_max):
+        if converged==False:
+          #---point_5_prepare_G_matrix_from_equation_3.154_from_P_old_and_v_ao
+            G=np.zeros((nao,nao)) 
+            for i in range(nao):
+                for j in range(nao):
+                    for l in range(nao):
+                        for k in range(nao):
+                            G[i,j]=G[i,j]+P_old[l,k]*(v_ao[i,j,k,l]-0.5*v_ao[i,l,k,j])
+            print("GGGGG")                
+            print(G)
+          #---point_6_obtain-F=h_core+G
+            F[:,:]=h_core_ao[:,:] + G[:,:]
+    
+            print("FOCK----")
+            print(F[:,:])
+            print("----")
+          #---point_7_calculate_transformed--F_trans=X_transpose*F*X
+            F_prime=np.dot(np.dot(X_three,F),X)
+          #---here_you_have_to_write_it
+          #---point_8_diagonalize--F_trans
+            epsilon, C_p=LA.eigh(F_prime)
+#            print "Eigenvalues", iter
+#            print epsilon
+#            print C_p
+          #-We will use a sepecial library function scipy.linalg.eigh 
+          #-that performs diagonalization of a Hermitian matrix
+          # epsilons are eigenvalues and C_p are eigenvectors
+	#---point_9_calculate---C=X*C_p
+            C=np.dot(X,C_p)       
+          #---here_you_have_to_write_it
+          #---point_10_form_a_new_density_matrix_(P_new)_from_3.145
+            P_new=np.zeros((nao,nao))
+            for i in range(nao):
+                for j in range(nao):
+                    for k in range(1):
+                        P_new[i,j]=P_new[i,j]+2*C[i,k]*C[j,k]
+            print("PPPPPP",iter)
+            print(P_new)
+            n_el=np.trace(np.dot(P_new,s_ao))
+            print(n_el)
+          #---here_you_have_to_write_it
+          #---calculate-energy--to--see--how--it--is--converging
+            Q=np.dot(P_new,h_core_ao+F)
+            Eo=0.0
+            for i in range(nao):
+                Eo=Eo+0.5*Q[i,i]
+            energy=Eo
+            print(energy,"is the Hartree-Fock ground state energy.")
+            print(" Energy total electronic",energy)
+            print("Energy ",energy+nuc_rep," in iteration ", iter) 
+            
+          #--point_11_check_convergence
+            u=0
+            t=np.zeros((nao,nao))
+            for i in range(nao):
+                for j in range(nao):
+                    t[i,j]=(P_new[i,j]-P_old[i,j])**(2.0)
+                    u=u+t[i,j]
+            tmp_conv=(u)**(0.5)/nao
+            tmp_conv=abs(energy-energyold)
+            if tmp_conv<=conv_thresh:
+                converged=True
+                print( "-----Converged----------for R=",R, "on Iteration", iter)
+                print( "----Eigenvalues----")
+                for i in range(nao):
+                    print( i, epsilon[i])
+                print( "----Eigenvectors---")
+                for i in range(nao):
+                    print("eigenvector_number ",i)
+                    for j in range(nao):
+                        print( j, C[i,j])
+
+               # for i in range(2):
+                # for j in range(2):
+                 # for u in range(2):
+                  # for a in range(2):
+                   # H_core_MO[u,a]=H_core_MO[u,a]+C[u,i]*h_core_ao[i,j]*C[j,a]
+               # for j in range(2):
+                # for u in range(2):
+                 # for a in range(2):
+                  # H_core_MO[u,a]=H_core_MO[u,a]+C[a,j]*H_core_MO[u,j]*C[j,a]
+#                print "-----In Molecular orbitals---H_core_MO=",H_core_MO
+                print ("-----This was h_core_ao=",h_core_ao)
+                B=np.dot(np.dot(C.T,s_ao),C)
+                print(B)
+            else:
+                P_old[:,:]=P_new[:,:]
+                energyold = energy
+                print("---------Diverged----------for R=",R, "on Iteration", iter)
+
+
+
+    # v_mo=hf_aux.transform_v(v_ao,C)
+    # H_core_MO=np.zeros((2,2))
+    # H_core_MO=np.dot(C.T,np.dot(h_core_ao,C))
+ 
+    # print "H_C"
+    # print H_core_MO
+    
+
+    # #print "This is in MO now----VMO=",VMO
+    # #print "------This was v_ao Atomic orbtial matrinx---v_ao=",v_ao
+    # G_MO=np.zeros((2,2))#something is wrong with G_MO since it should be diagonol and is not
+    # P_MO=np.array([[2,0],[0,0]])
+    # print P_MO
+    
+    # for u in range(2):
+    #     for a in range(2):
+    #         for b in range(2):
+    #             for t in range(2):
+    #                 G_MO[u,a]=G_MO[u,a]+P_MO[t,b]*(v_mo[u,a,b,t]-0.5*v_mo[u,t,b,a])
+
+
+    # F_MO=H_core_MO+G_MO
+    # print F_MO
+    
+    # print "---G_MO=",G_MO
+    # print "--Fock_MO=",F_MO
+    # print "F_prime=", F_prime 
+
+
+
+
+           # numb=0
+           # for i in range(nao):
+                #numb=numb+np.dot(P_old,s_ao)[i,i]
+                #print "numb"
+           # print numb
+    #Now for MP2 Correction to the ground state.
+
+    
+
+    #MP2 calculation begins here.
+            # import mp2
+            # VMO = mp2.ao_to_mo_conv(v_ao,C)
+            # print VMO
+            # E_MP2 = mp2.calculate_MP2_corr(VMO,epsilon,N,nao)
+            # print E_MP2,"is the 2nd-order correction term."
+    
+            # print "Thus the MP2 corrected energy is:"
+            # E_cor=energy+nuc_rep + E_MP2
+
+  #      print energy + E_MP2
+    # print "Let's do some Green's Function stuff."
+
+    # import selfenergy
+    # import mp2
+    # beta = 50
+    # VMO = mp2.ao_to_mo_conv(v_ao,C)
+    # output = open("green.txt","wr")
+    # space = " "
+    # output.write("omega")
+    # output.write(space)
+    # output.write("Im(G)")
+    # output.write(space)
+    # output.write("i*w*G(w)")
+    # output.write("\n")
+    
+    # for m in range(5000):
+    #     omega = selfenergy.calculate_omega(m,beta)
+    #     sigma_2 = selfenergy.matsubara_self_energy(VMO,m,beta,epsilon,N)
+    #     gree = selfenergy.greens_function(sigma_2,epsilon,omega)
+    #     output.write(str(omega))
+    #     output.write(space)
+    #     output.write(str(numpy.imag(gree[0,0])))
+    #     output.write(space)
+    #     output.write(str(1j*omega*numpy.imag(gree[0,0])))
+    #     output.write("\n")
+    # output.close()
