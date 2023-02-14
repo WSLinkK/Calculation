@@ -623,12 +623,12 @@ class scf_loop:
         G_fft_imga = np.imag(G_mo_fft)
         return G_fft_imga
 
-    def gf_ft(self, N, F_mo, beta):
+    def gf_ft(self, tau, N, F_mo, beta):
         I_n = np.identity(self.n_ao)
         G = np.zeros((self.n_ao, self.n_ao))
         for n in range(0, 1000):
-            iw = (2j * n + 1) * np.pi / beta
-            G += np.real(np.inv(np.dot(iw, I_n) - F_mo))
+            iw = (2 * n + 1) * np.pi / beta
+            G += np.real(np.inv(np.dot(1j * iw, I_n) - F_mo) * np.exp(-1j * iw * tau))
         for n in range(1000, N):
             iw = (2j * n + 1) * np.pi / beta
             G += np.real(1 / iw)
