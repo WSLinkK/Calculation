@@ -2,7 +2,7 @@ import os
 import rhf
 import sys
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import tracemalloc
 
 # --HF_for_H2_molecule
@@ -30,7 +30,7 @@ for r, R in enumerate(distance):
     rhf_scf = rhf.scf_loop(n_ao)
 
     print(f'_____________________Starting RHF Procedure_____________________')
-    E_hf, v_ao, c, fock_ao, fock_sao, x_mat, c_p = rhf_scf.hf_loop(n_ao, nuc_rep, N)
+    
     fock_mo = rhf.fock_transform(fock_ao, c)
     print(f'fock_ao:\n{fock_ao}')
     print(f'fock_sao:\n{fock_sao}')
