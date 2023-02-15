@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import tracemalloc
 # --HF_for_H2_molecule
 
-distance = [1.4] # 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.45, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.3, 4.6, 4.8, 4.9, 5.2, 5.5, 5.8, 6.0, 6.4, 6.8, 7.0, 10.0]
+distance = [0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.45, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.3, 4.6, 4.8, 4.9, 5.2, 5.5, 5.8, 6.0, 6.4, 6.8, 7.0, 10.0]
 n_ao = 2
 name = 'H2'
 E_HF = []
@@ -21,7 +21,7 @@ for r, R in enumerate(distance):
     os.system(s)
     s = 'tar -xvzf ' + name + '_' + str(R) + '.tar.gz'
     os.system(s)
-    #sys.stdout = open('H2_data_'+str(R)+'.txt', 'w')
+    sys.stdout = open('H2_data_'+str(R)+'.txt', 'w')
     print(f'_____________________{file_out}_____________________')
     nuc_rep = rhf.find_nuc_energy(name + '_' + str(R) + '.out')
     # N = input("Number of electrons? ")
@@ -45,12 +45,14 @@ for r, R in enumerate(distance):
     print(f'_____________________Starting MP3 Procedure_____________________')
     e_mp3 = rhf_scf.mp3_loop(v_mo_new, eps)
     E_MP3 += [E_hf + e_mp2 + e_mp3]
-    print(f'MP2+MP3_Correlation_Energy:{e_mp2 + e_mp3}')
+    print(f'MP2 + MP3_Correlation_Energy:{e_mp2 + e_mp3}')
     print(f'MP3_Total_Energy:{E_hf + e_mp2 + e_mp3}')
-    mp2, mp3= rhf_scf.rmp3_loop(v_mo, eps)
-    print(mp2)
-    print(mp2 + mp3)
-    # sys.stdout.close()
+    sys.stdout.close()
+    s = 'rm ' + name + '_' + str(R) + '.tar.gz'
+    os.system(s)
+    s = 'rm ' + name + '_' + str(R) + '.out'
+    os.system(s)
+    
 
 # E_HF = [x + 2 * 0.4666 for x in E_HF]
 # E_MP2 = [x + 2 * 0.4666 for x in E_MP2]

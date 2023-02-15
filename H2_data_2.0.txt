@@ -1,5 +1,5 @@
 _____________________H2_2.0.out_____________________
-_____________________Starting SCF Procedure_____________________
+_____________________Starting RHF Procedure_____________________
 ______Convergence step 1______
 Electronic energy = -2.1653907375892736
 Convergence error:0.3418154368452075
@@ -16,5 +16,8 @@ Coefficient:
 [[ 0.58464984 -0.9647349 ]
  [ 0.58464984  0.9647349 ]]
 _____________________Starting MP2 Procedure_____________________
-MP2_Correlation_Energy:0.02265560345267512
+MP2_Correlation_Energy:-0.022655603452675106
 MP2_Total_Energy:-1.0718265121830146
+_____________________Starting MP3 Procedure_____________________
+MP2 + MP3_Correlation_Energy:-0.03276117065359948
+MP3_Total_Energy:-1.081932079383939
