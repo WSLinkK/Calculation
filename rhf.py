@@ -5,6 +5,7 @@ import re
 
 
 def fock_transform(fock_matrix, c):
+    # Transform fock matrix from AO basis to MO basis
     h_core_mo = np.dot(np.dot(c.T, fock_matrix), c)
     return h_core_mo
 
@@ -15,6 +16,7 @@ def repeat_loop(dim: int, nested: int) -> np.ndarray:
 
 
 def transform_v(v_ao, cmo):
+    # Transform v_ao to v_mo
     nao = cmo.shape[0]
     nmo = cmo.shape[1]
     cmot = np.zeros(cmo.shape)
@@ -69,6 +71,7 @@ def calculate_s12_transformation_matrix(s_mat):
 
 
 def find_nuc_energy(file_hf):
+    # Read nuclear repulsion energy from file
     nuc_rep = ''
     f = open(file_hf, 'r')
     for line in f:
@@ -91,6 +94,7 @@ def substitute_string(string, rule):
 
 class scf_loop:
     def __init__(self, n_ao):
+        # Initialize
         self.n_ao = n_ao
         h_core_ao, v_ao, s_ao = self.get_integrals()
         self.h_core_ao = h_core_ao
@@ -258,18 +262,7 @@ class scf_loop:
                 print(f'Density matrix:\n{p_mat}')
                 print(f'Coefficient:\n{coefficient}')
                 return energy_tot, self.v_ao, coefficient, fock_mat, fock_p, x_mat, c_p
-
-    def mp2_loop_old(self, v_mo, eps):
-        e_mp2_corr = 0.0
-        loop_indices = repeat_loop(self.n_ao, 4)
-        for a, b, r, s in loop_indices:
-            eps_sum = eps[a] + eps[b] - eps[r] - eps[s]
-            if eps_sum > 1e-14:
-                e_mp2_corr += (v_mo[a, b, r, s] * (2 * v_mo[r, s, a, b] - v_mo[r, s, b, a])) / eps_sum
-                # e_mp2_corr += (v_mo[a, r, b, s] * (2 * v_mo[a, r, b, s] - v_mo[a, s, b, r])) / eps_sum
-                # e_mp2_corr += (v_mo[a, r, b, s] * (2 * v_mo[r, b, a, s] - v_mo[r, a, b, s])) / eps_sum
-        return -e_mp2_corr
-
+    
     def mp2_loop(self, v_mo, eps):
         e_mp2_corr = 0.0
         t = int(self.n_ao / 2)
@@ -287,74 +280,6 @@ class scf_loop:
         for a, b, r, s in loop_indices:
             v_mo_new[a, b, r, s] = v_mo[a, r, b, s]
         return v_mo_new
-
-    def mp3_loop_old(self, v_mo, eps):
-        e_mp3 = 0.0
-        loop_indices = repeat_loop(self.n_ao, 6)
-        for a, b, c, d, r, s in loop_indices:
-            # Diagram 2
-            eps_2 = (eps[a] + eps[d] - eps[r] - eps[s]) * (eps[c] + eps[b] - eps[r] - eps[s])
-            if eps_2 > 1e-14:
-                e_mp3 += (2 * v_mo[a, d, r, s] * v_mo[c, b, a, d] * v_mo[r, s, c, b]) / eps_2
-
-            # Diagram 7
-            eps_7 = (eps[a] + eps[c] - eps[r] - eps[s]) * (eps[d] + eps[b] - eps[r] - eps[s])
-            if eps_7 > 1e-14:
-                e_mp3 += (-1 * v_mo[a, c, r, s] * v_mo[d, b, a, c] * v_mo[s, r, d, b]) / eps_7
-
-        for a, b, r, s, t, u in loop_indices:
-            # Diagram 1
-            eps_1 = (eps[a] + eps[b] - eps[r] - eps[u]) * (eps[a] + eps[b] - eps[t] - eps[s])
-            if eps_1 > 1e-14:
-                e_mp3 += (2 * v_mo[a, b, r, u] * v_mo[r, u, t, s] * v_mo[t, s, a, b]) / eps_1
-
-            # Diagram 8
-            eps_8 = (eps[a] + eps[b] - eps[t] - eps[r]) * (eps[a] + eps[b] - eps[u] - eps[s])
-            if eps_8 > 1e-14:
-                e_mp3 += (-1 * v_mo[a, b, r, t] * v_mo[t, r, u, s] * v_mo[u, s, a, b]) / eps_8
-
-        for a, b, c, r, s, t in loop_indices:
-            # Diagram 3
-            eps_3 = (eps[a] + eps[c] - eps[r] - eps[t]) * (eps[a] + eps[b] - eps[s] - eps[t])
-            if eps_3 > 1e-14:
-                e_mp3 += (-4 * v_mo[a, c, r, t] * v_mo[r, b, s, c] * v_mo[s, t, a, b]) / eps_3
-
-            # Diagram 4
-            eps_4 = (eps[b] + eps[c] - eps[r] - eps[t]) * (eps[a] + eps[c] - eps[s] - eps[t])
-            if eps_4 > 1e-14:
-                e_mp3 += (-4 * v_mo[b, c, r, t] * v_mo[r, a, s, b] * v_mo[s, t, a, c]) / eps_4
-
-            # Diagram 5
-            eps_5 = (eps[a] + eps[c] - eps[r] - eps[t]) * (eps[a] + eps[b] - eps[r] - eps[s])
-            if eps_5 > 1e-14:
-                e_mp3 += (8 * v_mo[a, c, r, t] * v_mo[b, t, s, c] * v_mo[r, s, a, b]) / eps_5
-
-            # Diagram 6
-            eps_6 = (eps[c] + eps[b] - eps[r] - eps[t]) * (eps[a] + eps[b] - eps[r] - eps[s])
-            if eps_6 > 1e-14:
-                e_mp3 += (2 * v_mo[c, b, r, t] * v_mo[a, t, s, c] * v_mo[r, s, a, b]) / eps_6
-
-            # Diagram 9
-            eps_9 = (eps[c] + eps[b] - eps[r] - eps[t]) * (eps[a] + eps[c] - eps[s] - eps[t])
-            if eps_9 > 1e-14:
-                e_mp3 += (2 * v_mo[b, c, r, t] * v_mo[a, r, b, s] * v_mo[t, s, a, c]) / eps_9
-
-            # Diagram 10
-            eps_10 = (eps[c] + eps[b] - eps[r] - eps[t]) * (eps[a] + eps[c] - eps[s] - eps[t])
-            if eps_10 > 1e-14:
-                e_mp3 += (2 * v_mo[c, b, r, t] * v_mo[r, a, s, b] * v_mo[s, t, a, c]) / eps_10
-
-            # Diagram 11
-            eps_11 = (eps[a] + eps[b] - eps[r] - eps[s]) * (eps[c] + eps[b] - eps[r] - eps[t])
-            if eps_11 > 1e-14:
-                e_mp3 += (-4 * v_mo[a, b, r, s] * v_mo[s, c, a, t] * v_mo[r, t, b, c]) / eps_11
-
-            # Diagram 12
-            eps_12 = (eps[b] + eps[c] - eps[t] - eps[r]) * (eps[a] + eps[b] - eps[r] - eps[s])
-            if eps_12 > 1e-14:
-                e_mp3 += (-4 * v_mo[b, c, r, t] * v_mo[a, t, s, c] * v_mo[r, s, a, b]) / eps_12
-
-        return e_mp3 / 2
 
     def mp3_loop(self, v_mo, eps):
         e_mp3 = 0.0
@@ -579,57 +504,13 @@ class scf_loop:
         G_tau = fft(g_iw)
         return G_tau
 
-    def gf2_fft(self, omega, c, v_ao, v_sao, v_mo, fock_ao, fock_mo, x_mat, fock_sao):
-        I_n = np.identity(self.n_ao)
-        eps = np.diag(fock_mo)
-        loop_indices = repeat_loop(self.n_ao, 2)
-
-        A_mo_real = np.zeros(omega.shape)
-        A_mo_imag = np.zeros(omega.shape)
-
-        A_ao_2_real = np.zeros(omega.shape)
-        A_ao_2_imag = np.zeros(omega.shape)
-
-        A_sao_2_real = np.zeros(omega.shape)
-        A_sao_2_imag = np.zeros(omega.shape)
-
-        A_mo_2_real = np.zeros(omega.shape)
-        A_mo_2_imag = np.zeros(omega.shape)
-
-        Sig_mo = np.zeros(omega.shape)
-        Sig_ao = np.zeros(omega.shape)
-        Sig_sao = np.zeros(omega.shape)
-
-        w_dim, n_dim = omega.shape
-
-        s_mo = np.dot(np.dot(c.T, self.s_ao), c)
-        s_sao = np.dot(np.dot(x_mat.T, self.s_ao), x_mat)
-        G_mo_fft = np.zeros(omega.shape)
-        for k in range(w_dim):
-            for p in range(n_dim):
-                G_mo = np.linalg.inv(np.subtract(np.dot(omega[k, p], I_n), fock_mo))
-                G_ao = np.linalg.inv(np.dot(omega[k, p], self.s_ao) - fock_ao)
-                G_sao = np.linalg.inv(np.dot(omega[k, p], I_n) - fock_sao)
-
-                A_mo = np.trace(np.dot(G_mo, self.s_ao))
-                A_mo_imag[k, p] += - (1 / np.pi) * np.imag(np.trace(np.dot(G_mo, s_mo)))
-                A_mo_real[k, p] += (-1 / np.pi) * np.real(A_mo)
-
-                Sigma_mo = np.zeros((self.n_ao, self.n_ao), dtype=complex)
-                Sigma_ao = np.zeros((self.n_ao, self.n_ao), dtype=complex)
-                Sigma_sao = np.zeros((self.n_ao, self.n_ao), dtype=complex)
-                t = int(self.n_ao / 2)
-                G_mo_fft[k, p] = self.fft(G_mo)
-        G_fft_imga = np.imag(G_mo_fft)
-        return G_fft_imga
-
     def gf_ft(self, tau, N, F_mo, beta):
         I_n = np.identity(self.n_ao)
         G = np.zeros((self.n_ao, self.n_ao))
         for n in range(0, 1000):
-            iw = (2 * n + 1) * np.pi / beta
-            G += np.real(np.inv(np.dot(1j * iw, I_n) - F_mo) * np.exp(-1j * iw * tau))
+            iw = (2 * n + 1) * (np.pi / beta)
+            G += np.real(np.linalg.inv(np.dot(1j * iw, I_n) - F_mo) * np.exp(-1j * iw * tau))
         for n in range(1000, N):
-            iw = (2j * n + 1) * np.pi / beta
+            iw = (2j * n + 1) * (np.pi / beta)
             G += np.real(1 / iw)
-        return G
+        return G[0,0]
