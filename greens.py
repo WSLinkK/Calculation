@@ -30,7 +30,7 @@ for r, R in enumerate(distance):
     rhf_scf = rhf.scf_loop(n_ao)
 
     print(f'_____________________Starting RHF Procedure_____________________')
-    
+    E_hf, v_ao, c, fock_ao, fock_sao, x_mat, c_p = rhf_scf.hf_loop(n_ao, nuc_rep, N)
     fock_mo = rhf.fock_transform(fock_ao, c)
     print(f'fock_ao:\n{fock_ao}')
     print(f'fock_sao:\n{fock_sao}')
@@ -61,7 +61,7 @@ for r, R in enumerate(distance):
     print(f"_____________________Creating Spectral Function Graph _____________________")
     #A_hs_sao, A_ao, sigma = hf_jacob.hf_loop(n_ao, R, nuc_rep, N)
     #print(test)
-'''
+
     imag, axis_1 = plt.subplots(2, 2, figsize=(12, 10))
     sigma, axis_2 = plt.subplots(2, 2, figsize=(12, 10))
     t = 0
@@ -92,8 +92,6 @@ for r, R in enumerate(distance):
     sigma.savefig(f'Sigma_Function_Figure/btest{R}.pdf', dpi=800)
     #wabplt.show()
 
-
-'''
 '''
     
     print(f"_____________________Creating Spectral Function Graph _____________________")

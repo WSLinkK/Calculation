@@ -198,7 +198,7 @@ class scf_loop:
         p_mat = np.zeros((n_ao, n_ao), dtype=float)
         fock_mat = np.zeros((n_ao, n_ao), dtype=float)
         # coefficient = np.zeros((n_ao, n_ao), dtype=float)
-        conv_criteria = 1e-11
+        conv_criteria = 1e-12
         k = 0
         # energy = 0.0
 
