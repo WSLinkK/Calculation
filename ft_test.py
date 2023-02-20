@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tracemalloc
 from numpy import ones, copy, cos, tan, pi, linspace
+from numpy.fft import fft, ifft
 
 
 def gaussxw(N):
@@ -85,10 +86,16 @@ for q in range(len(w)):
 #Sig_mo, Sig_ao, Sig_sao, A_mo_imag, A_mo_2_imag, A_ao_2_imag, A_sao_2_imag = rhf_scf.gf2_loop(omega, c, c_p, x_mat, v_mo, fock_ao, fock_mo, fock_sao)
 
 
-tau = np.arange(0, 120, 0.2)
+tau = np.arange(0, 120, 0.5)
+beta = 1000
+N = 10000
+n = np.arange(0, N, 1)
+I_n = np.identity(2)
+
 G_tau = np.zeros(len(tau))
 for i in range(0, len(tau)):
-    G_tau[i] += rhf_scf.gf_ft(tau[i], 10000, fock_mo, 1000)
+    G_tau[i] += rhf_scf.gf_ft(tau[i], N, fock_mo, beta)
+
 
 '''
 N = 100
@@ -105,7 +112,7 @@ print(f"_____________________Creating Spectral Function Graph __________________
 
 plt.figure()
 plt.plot(tau, G_tau, '-k')
-plt.savefig('ft.pdf', dpi=800)
+plt.savefig('ft.png', dpi=800)
 
 
 
