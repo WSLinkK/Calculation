@@ -506,11 +506,11 @@ class scf_loop:
 
     def gf_ft(self, tau, N, F_mo, beta):
         I_n = np.identity(self.n_ao)
-        G = np.zeros((self.n_ao, self.n_ao))
+        G = np.zeros((self.n_ao, self.n_ao), complex)
         for n in range(0, 1000):
-            iw = (2 * n + 1) * (np.pi / beta)
+            iw = (2j * n + 1) * (np.pi / beta)
             G += np.real(np.linalg.inv(np.dot(1j * iw, I_n) - F_mo) * np.exp(-1j * iw * tau))
         for n in range(1000, N):
             iw = (2j * n + 1) * (np.pi / beta)
             G += np.real(1 / iw)
-        return G[0,0]
+        return trace(G)

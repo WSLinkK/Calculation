@@ -85,10 +85,10 @@ for q in range(len(w)):
 #Sig_mo, Sig_ao, Sig_sao, A_mo_imag, A_mo_2_imag, A_ao_2_imag, A_sao_2_imag = rhf_scf.gf2_loop(omega, c, c_p, x_mat, v_mo, fock_ao, fock_mo, fock_sao)
 
 
-tau = np.linspace(0, 10, 1000)
+tau = np.arange(0, 120, 0.2)
 G_tau = np.zeros(len(tau))
 for i in range(0, len(tau)):
-    G_tau[i] += rhf_scf.gf_ft(tau[i], 10000, fock_mo, 100.0)
+    G_tau[i] += rhf_scf.gf_ft(tau[i], 10000, fock_mo, 1000)
 
 '''
 N = 100
@@ -103,10 +103,8 @@ for i in range(N):
 '''
 print(f"_____________________Creating Spectral Function Graph _____________________")
 
-
-
 plt.figure()
-plt.plot(tau, G_tau)
+plt.plot(tau, G_tau, '-k')
 plt.savefig('ft.pdf', dpi=800)
 
 
